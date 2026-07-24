@@ -517,8 +517,16 @@ function positionTooltip(event) {
 
 function onMouseEnter(event, d) {
   const en = d.properties.name;
-  ttJa.textContent = nameJa(en);
-  ttEn.textContent = en;
+
+  // クリック済みの国なら国名を表示、未クリックなら「？？？」を表示
+  if (visited.has(en)) {
+    ttJa.textContent = nameJa(en);
+    ttEn.textContent = en;
+  } else {
+    ttJa.textContent = '？？？';
+    ttEn.textContent = 'クリックで答えを表示';
+  }
+
   positionTooltip(event);
   tooltip.classList.add('show');
   if (!this.classList.contains('active')) {
@@ -547,6 +555,10 @@ function onClick(event, d) {
     updateProgressBar();
     checkComplete(ja);
   }
+
+  // クリックした瞬間にツールチップの表示も正解の国名に更新する
+  ttJa.textContent = ja;
+  ttEn.textContent = en;
 
   // flash active
   d3.selectAll('.country').classed('active', false);
