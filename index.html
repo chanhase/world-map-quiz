@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>世界地図 — 国名暗記ツール</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="translations.js"></script>
+  <style>
+    /* ── Design tokens ───────────────────────── */
+    :root {
+      --bg:          #f0ede8;
+      --ocean:       #c8dce8;
+      --land:        #e8e2d8;
+      --land-stroke: #b8b0a0;
+      --visited:     #7ba99a;
+      --visited-dk:  #5a8a7c;
+      --hover:       #d4c8a8;
+      --active:      #c4a855;
+      --text-main:   #2a2520;
+      --text-sub:    #7a736a;
+      --panel-bg:    #ffffff;
+      --panel-shadow:rgba(42,37,32,0.12);
+      --accent:      #c4552a;   /* warm terra-cotta — the one bold choice */
+
+      --font-display: 'Georgia', 'Times New Roman', serif;
+      --font-body:    'Helvetica Neue', 'Arial', sans-serif;
+      --font-mono:    'SF Mono', 'Consolas', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ──────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      background: var(--panel-bg);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+      flex-shrink: 0;
+      gap: 16px;
+    }
+
+    .header-left h1 {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: normal;
+      letter-spacing: 0.02em;
+      color: var(--text-main);
+    }
+
+    .header-left p {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      margin-top: 1px;
+      letter-spacing: 0.04em;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .counter {
+      text-align: right;
+    }
+
+    .counter .num {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: bold;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .counter .label {
+      font-size: 0.65rem;
+      color: var(--text-sub);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .btn-reset {
+      background: transparent;
+      border: 1.5px solid var(--land-stroke);
+      color: var(--text-sub);
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      padding: 6px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: all 0.15s;
+    }
+
+    .btn-reset:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── Map area ─────────────────────────────── */
+    #map-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: var(--ocean);
+    }
+
+    svg#map {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: pointer;
+    }
+
+    /* country paths */
+    .country {
+      fill: var(--land);
+      stroke: var(--land-stroke);
+      stroke-width: 0.5px;
+      transition: fill 0.18s ease;
+    }
+
+    .country:hover {
+      fill: var(--hover);
+    }
+
+    .country.visited {
+      fill: var(--visited);
+      stroke: var(--visited-dk);
+    }
+
+    .country.visited:hover {
+      fill: var(--visited-dk);
+    }
+
+    .country.active {
+      fill: var(--active);
+      stroke: #a08830;
+    }
+
+    /* ── Tooltip / name card ─────────────────── */
+    #tooltip {
+      position: fixed;
+      pointer-events: none;
+      z-index: 100;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.15s, transform 0.15s;
+    }
+
+    #tooltip.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .tooltip-inner {
+      background: var(--panel-bg);
+      border-radius: 8px;
+      box-shadow: 0 4px 20px var(--panel-shadow), 0 0 0 1px rgba(0,0,0,0.06);
+      padding: 14px 18px;
+      min-width: 140px;
+      text-align: center;
+    }
+
+    .tooltip-inner .ja {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      color: var(--text-main);
+      line-height: 1.3;
+    }
+
+    .tooltip-inner .en {
+      font-size: 0.7rem;
+      color: var(--text-sub);
+      letter-spacing: 0.05em;
+      margin-top: 3px;
+    }
+
+    /* ── Pinned name banner (bottom) ─────────── */
+    #name-banner {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      z-index: 90;
+      text-align: center;
+    }
+
+    #name-banner.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    #name-banner .banner-inner {
+      background: var(--text-main);
+      color: #fff;
+      border-radius: 10px;
+      padding: 12px 28px;
+      display: inline-block;
+    }
+
+    #name-banner .banner-ja {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+    }
+
+    #name-banner .banner-en {
+      font-size: 0.72rem;
+      opacity: 0.65;
+      margin-top: 2px;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Progress bar ─────────────────────────── */
+    #progress-bar-wrap {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      z-index: 200;
+      background: rgba(0,0,0,0.06);
+    }
+
+    #progress-bar {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.4s ease;
+      width: 0%;
+    }
+
+    /* ── Completion overlay ───────────────────── */
+    #complete-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(240,237,232,0.92);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #complete-overlay.show {
+      display: flex;
+    }
+
+    .complete-card {
+      background: var(--panel-bg);
+      border-radius: 16px;
+      padding: 52px 60px;
+      text-align: center;
+      box-shadow: 0 8px 40px var(--panel-shadow);
+    }
+
+    .complete-card .trophy {
+      font-size: 3rem;
+      margin-bottom: 16px;
+    }
+
+    .complete-card h2 {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: normal;
+      margin-bottom: 8px;
+    }
+
+    .complete-card p {
+      color: var(--text-sub);
+      font-size: 0.9rem;
+      margin-bottom: 28px;
+    }
+
+    .btn-restart {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      padding: 12px 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: background 0.15s;
+    }
+
+    .btn-restart:hover {
+      background: #a8451f;
+    }
+
+    /* ── Zoom controls ───────────────────────── */
+    #zoom-controls {
+      position: fixed;
+      right: 16px;
+      bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 80;
+    }
+
+    .zoom-btn {
+      width: 32px;
+      height: 32px;
+      background: var(--panel-bg);
+      border: 1.5px solid var(--land-stroke);
+      border-radius: 4px;
+      font-size: 1.1rem;
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.12s;
+    }
+
+    .zoom-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── Responsive ───────────────────────────── */
+    @media (max-width: 600px) {
+      header {
+        padding: 10px 14px;
+        flex-wrap: wrap;
+      }
+      .header-left h1 { font-size: 1rem; }
+      .counter .num { font-size: 1.2rem; }
+      #name-banner .banner-ja { font-size: 1.1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+
+  <header>
+    <div class="header-left">
+      <h1>世界地図 — 国名暗記</h1>
+      <p>国をクリックして名前を確認。訪れた国は緑に染まる。</p>
+    </div>
+    <div class="header-right">
+      <div class="counter">
+        <div class="num" id="visited-count">0</div>
+        <div class="label">/ <span id="total-count">0</span> カ国 クリック済み</div>
+      </div>
+      <button class="btn-reset" id="btn-reset">リセット</button>
+    </div>
+  </header>
+
+  <div id="map-container">
+    <svg id="map"></svg>
+  </div>
+
+  <!-- Floating tooltip (follows cursor) -->
+  <div id="tooltip">
+    <div class="tooltip-inner">
+      <div class="ja" id="tt-ja"></div>
+      <div class="en" id="tt-en"></div>
+    </div>
+  </div>
+
+  <!-- Pinned banner after click -->
+  <div id="name-banner">
+    <div class="banner-inner">
+      <div class="banner-ja" id="bn-ja"></div>
+      <div class="banner-en" id="bn-en"></div>
+    </div>
+  </div>
+
+  <!-- Zoom controls -->
+  <div id="zoom-controls">
+    <button class="zoom-btn" id="zoom-in" title="ズームイン">＋</button>
+    <button class="zoom-btn" id="zoom-out" title="ズームアウト">−</button>
+    <button class="zoom-btn" id="zoom-reset" title="全体表示" style="font-size:0.8rem;">⌂</button>
+  </div>
+
+  <!-- Completion overlay -->
+  <div id="complete-overlay">
+    <div class="complete-card">
+      <div class="trophy">🌍</div>
+      <h2>全カ国制覇！</h2>
+      <p id="complete-msg"></p>
+      <button class="btn-restart" id="btn-restart">もう一度チャレンジ</button>
+    </div>
+  </div>
+
+<script>
+// ─────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────
+const STORAGE_KEY = 'worldmap_visited_v1';
+let visited = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
+let totalCountries = 0;
+let bannerTimer = null;
+
+// ─────────────────────────────────────────────
+// D3 Setup
+// ─────────────────────────────────────────────
+const svg = d3.select('#map');
+const container = document.getElementById('map-container');
+
+const projection = d3.geoNaturalEarth1()
+  .scale(160)
+  .translate([0, 0]);   // will be recalculated on resize
+
+const path = d3.geoPath().projection(projection);
+
+// zoom
+const zoom = d3.zoom()
+  .scaleExtent([0.5, 10])
+  .on('zoom', (event) => {
+    g.attr('transform', event.transform);
+  });
+
+svg.call(zoom);
+
+const g = svg.append('g');
+
+// ocean background rect
+svg.insert('rect', ':first-child')
+   .attr('id', 'ocean-bg')
+   .attr('fill', '#c8dce8');
+
+// ─────────────────────────────────────────────
+// Draw Map
+// ─────────────────────────────────────────────
+async function initMap() {
+  const world = await d3.json('world.geojson');
+  const features = world.features.filter(d => d.properties.name !== 'Antarctica');
+  totalCountries = features.length;
+
+  document.getElementById('total-count').textContent = totalCountries;
+  updateCounter();
+  updateProgressBar();
+
+  g.selectAll('.country')
+    .data(features)
+    .join('path')
+      .attr('class', d => {
+        const base = 'country';
+        return visited.has(d.properties.name) ? base + ' visited' : base;
+      })
+      .attr('d', path)
+      .on('mouseenter', onMouseEnter)
+      .on('mousemove', onMouseMove)
+      .on('mouseleave', onMouseLeave)
+      .on('click', onClick);
+
+  fitMap();
+}
+
+function fitMap() {
+  const W = container.clientWidth;
+  const H = container.clientHeight;
+
+  projection
+    .scale(Math.min(W / 6.3, H / 3.4))
+    .translate([W / 2, H / 2]);
+
+  svg
+    .attr('width', W)
+    .attr('height', H);
+
+  d3.select('#ocean-bg')
+    .attr('width', W)
+    .attr('height', H);
+
+  g.selectAll('.country').attr('d', path);
+
+  svg.call(zoom.transform, d3.zoomIdentity);
+}
+
+window.addEventListener('resize', fitMap);
+
+// ─────────────────────────────────────────────
+// Interaction helpers
+// ─────────────────────────────────────────────
+const tooltip  = document.getElementById('tooltip');
+const ttJa     = document.getElementById('tt-ja');
+const ttEn     = document.getElementById('tt-en');
+const banner   = document.getElementById('name-banner');
+const bnJa     = document.getElementById('bn-ja');
+const bnEn     = document.getElementById('bn-en');
+
+function nameJa(en) {
+  return COUNTRY_TRANSLATIONS[en] || en;
+}
+
+function positionTooltip(event) {
+  const pad = 14;
+  const TW = tooltip.offsetWidth  || 160;
+  const TH = tooltip.offsetHeight || 70;
+  let x = event.clientX + 18;
+  let y = event.clientY - TH / 2;
+  if (x + TW > window.innerWidth  - pad) x = event.clientX - TW - 14;
+  if (y < pad)                           y = pad;
+  if (y + TH > window.innerHeight - pad) y = window.innerHeight - TH - pad;
+  tooltip.style.left = x + 'px';
+  tooltip.style.top  = y + 'px';
+}
+
+function onMouseEnter(event, d) {
+  const en = d.properties.name;
+  ttJa.textContent = nameJa(en);
+  ttEn.textContent = en;
+  positionTooltip(event);
+  tooltip.classList.add('show');
+  if (!this.classList.contains('active')) {
+    this.style.cursor = 'pointer';
+  }
+}
+
+function onMouseMove(event) {
+  positionTooltip(event);
+}
+
+function onMouseLeave() {
+  tooltip.classList.remove('show');
+}
+
+function onClick(event, d) {
+  const en = d.properties.name;
+  const ja = nameJa(en);
+
+  // mark visited
+  if (!visited.has(en)) {
+    visited.add(en);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...visited]));
+    d3.select(this).classed('visited', true);
+    updateCounter();
+    updateProgressBar();
+    checkComplete(ja);
+  }
+
+  // flash active
+  d3.selectAll('.country').classed('active', false);
+  d3.select(this).classed('active', true);
+
+  // show banner
+  bnJa.textContent = ja;
+  bnEn.textContent = en;
+  banner.classList.add('show');
+
+  clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(() => {
+    banner.classList.remove('show');
+    d3.select(this).classed('active', false);
+  }, 2600);
+}
+
+// ─────────────────────────────────────────────
+// Counter & Progress
+// ─────────────────────────────────────────────
+function updateCounter() {
+  document.getElementById('visited-count').textContent = visited.size;
+}
+
+function updateProgressBar() {
+  const pct = totalCountries > 0 ? (visited.size / totalCountries) * 100 : 0;
+  document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+function checkComplete(lastCountry) {
+  if (visited.size >= totalCountries) {
+    setTimeout(() => {
+      document.getElementById('complete-msg').textContent =
+        `${totalCountries} カ国すべてを制覇しました！`;
+      document.getElementById('complete-overlay').classList.add('show');
+    }, 600);
+  }
+}
+
+// ─────────────────────────────────────────────
+// Controls
+// ─────────────────────────────────────────────
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (!confirm('クリック履歴をリセットしますか？')) return;
+  visited.clear();
+  localStorage.removeItem(STORAGE_KEY);
+  d3.selectAll('.country').classed('visited', false).classed('active', false);
+  updateCounter();
+  updateProgressBar();
+  banner.classList.remove('show');
+});
+
+document.getElementById('btn-restart').addEventListener('click', () => {
+  document.getElementById('complete-overlay').classList.remove('show');
+  visited.clear();
+  localStorage.removeItem(STORAGE_KEY);
+  d3.selectAll('.country').classed('visited', false).classed('active', false);
+  updateCounter();
+  updateProgressBar();
+});
+
+document.getElementById('zoom-in').addEventListener('click', () => {
+  svg.transition().duration(300).call(zoom.scaleBy, 1.6);
+});
+document.getElementById('zoom-out').addEventListener('click', () => {
+  svg.transition().duration(300).call(zoom.scaleBy, 0.625);
+});
+document.getElementById('zoom-reset').addEventListener('click', () => {
+  svg.transition().duration(400).call(zoom.transform, d3.zoomIdentity);
+});
+
+// ─────────────────────────────────────────────
+// Boot
+// ─────────────────────────────────────────────
+initMap();
+</script>
+</body>
+</html>
