@@ -546,36 +546,51 @@ function onClick(event, d) {
   const en = d.properties.name;
   const ja = nameJa(en);
 
-  // mark visited
-  if (!visited.has(en)) {
+  if (visited.has(en)) {
+    // ── すでに回答済みの場合：未回答に戻す ──
+    visited.delete(en);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...visited]));
+    d3.select(this).classed('visited', false).classed('active', false);
+
+    // ツールチップを未回答表示に戻す
+    ttJa.textContent = '？？？';
+    ttEn.textContent = 'クリックで答えを表示';
+
+    // 下部バナーを非表示にする
+    banner.classList.remove('show');
+    clearTimeout(bannerTimer);
+
+  } else {
+    // ── 未回答の場合：回答済みにする ──
     visited.add(en);
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...visited]));
     d3.select(this).classed('visited', true);
-    updateCounter();
-    updateProgressBar();
+
+    // ツールチップと下部バナーに正解を表示
+    ttJa.textContent = ja;
+    ttEn.textContent = en;
+
+    bnJa.textContent = ja;
+    bnEn.textContent = en;
+    banner.classList.add('show');
+
+    // ハイライト表示
+    d3.selectAll('.country').classed('active', false);
+    d3.select(this).classed('active', true);
+
+    clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(() => {
+      banner.classList.remove('show');
+      d3.select(this).classed('active', false);
+    }, 2600);
+
     checkComplete(ja);
   }
 
-  // クリックした瞬間にツールチップの表示も正解の国名に更新する
-  ttJa.textContent = ja;
-  ttEn.textContent = en;
-
-  // flash active
-  d3.selectAll('.country').classed('active', false);
-  d3.select(this).classed('active', true);
-
-  // show banner
-  bnJa.textContent = ja;
-  bnEn.textContent = en;
-  banner.classList.add('show');
-
-  clearTimeout(bannerTimer);
-  bannerTimer = setTimeout(() => {
-    banner.classList.remove('show');
-    d3.select(this).classed('active', false);
-  }, 2600);
+  // カウントとプログレスバーを更新
+  updateCounter();
+  updateProgressBar();
 }
-
 // ─────────────────────────────────────────────
 // Counter & Progress
 // ─────────────────────────────────────────────
