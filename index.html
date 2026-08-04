@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>世界地図 — 国名暗記ツール</title>
+  <meta name="description" content="白地図をクリックして国名を覚える無料の暗記ツール。訪れた国は緑色にマークされ、進捗バーで達成率がひと目でわかります。登録不要・ブラウザだけですぐ遊べます。" />
+  <meta property="og:title" content="世界地図 — 国名暗記ツール" />
+  <meta property="og:description" content="白地図をクリックして国名を覚える無料の暗記ツール。登録不要・ブラウザだけですぐ遊べます。" />
+  <meta property="og:type" content="website" />
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="translations.js"></script>
   <style>
@@ -333,6 +337,27 @@
       color: var(--accent);
     }
 
+    /* ── Footer ───────────────────────────────── */
+    footer {
+      flex-shrink: 0;
+      text-align: center;
+      padding: 8px 16px;
+      background: var(--panel-bg);
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+
+    footer a {
+      color: var(--text-sub);
+      font-size: 0.72rem;
+      text-decoration: none;
+      margin: 0 10px;
+      letter-spacing: 0.02em;
+    }
+
+    footer a:hover {
+      color: var(--accent);
+    }
+
     /* ── Responsive ───────────────────────────── */
     @media (max-width: 600px) {
       header {
@@ -399,6 +424,11 @@
       <button class="btn-restart" id="btn-restart">もう一度チャレンジ</button>
     </div>
   </div>
+
+  <footer>
+    <a href="privacy-policy.html">プライバシーポリシー</a>
+    <a href="contact.html">お問い合わせ</a>
+  </footer>
 
 <script>
 // ─────────────────────────────────────────────
