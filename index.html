@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>世界地図 — 国名暗記ツール</title>
-  <meta name="description" content="白地図をクリックして国名を覚える無料の暗記ツール。訪れた国は緑色にマークされ、進捗バーで達成率がひと目でわかります。登録不要・ブラウザだけですぐ遊べます。" />
+  <meta name="description" content="白地図をクリックして国名を覚える無料の暗記ツール。クイズモードで実力チェックも。訪れた国は緑色にマークされ、進捗バーで達成率がひと目でわかります。登録不要・ブラウザだけですぐ遊べます。" />
   <meta property="og:title" content="世界地図 — 国名暗記ツール" />
-  <meta property="og:description" content="白地図をクリックして国名を覚える無料の暗記ツール。登録不要・ブラウザだけですぐ遊べます。" />
+  <meta property="og:description" content="白地図をクリックして国名を覚える無料の暗記ツール。クイズモードで実力チェックも。登録不要・ブラウザだけですぐ遊べます。" />
   <meta property="og:type" content="website" />
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="translations.js"></script>
@@ -21,6 +21,8 @@
       --visited-dk:  #5a8a7c;
       --hover:       #d4c8a8;
       --active:      #c4a855;
+      --wrong:       #c85a3a;
+      --wrong-dk:    #a8432a;
       --text-main:   #2a2520;
       --text-sub:    #7a736a;
       --panel-bg:    #ffffff;
@@ -73,7 +75,36 @@
     .header-right {
       display: flex;
       align-items: center;
-      gap: 20px;
+      gap: 16px;
+    }
+
+    /* ── Mode toggle ──────────────────────────── */
+    .mode-toggle {
+      display: flex;
+      gap: 2px;
+      background: var(--bg);
+      padding: 3px;
+      border-radius: 8px;
+    }
+
+    .mode-btn {
+      border: none;
+      background: transparent;
+      padding: 7px 14px;
+      font-size: 0.76rem;
+      font-family: var(--font-body);
+      color: var(--text-sub);
+      border-radius: 6px;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: all 0.15s;
+    }
+
+    .mode-btn.active {
+      background: var(--panel-bg);
+      color: var(--accent);
+      font-weight: 600;
+      box-shadow: 0 1px 3px var(--panel-shadow);
     }
 
     .counter {
@@ -109,6 +140,76 @@
     }
 
     .btn-reset:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── Quiz bar ─────────────────────────────── */
+    #quiz-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 28px;
+      background: var(--panel-bg);
+      border-top: 1px solid rgba(0,0,0,0.06);
+      flex-shrink: 0;
+    }
+
+    #quiz-bar.show {
+      display: flex;
+    }
+
+    .quiz-progress {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      min-width: 64px;
+    }
+
+    .quiz-prompt {
+      text-align: center;
+      flex: 1;
+    }
+
+    .quiz-prompt .q-ja {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      color: var(--text-main);
+    }
+
+    .quiz-prompt .q-en {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+    }
+
+    .quiz-score {
+      font-size: 0.78rem;
+      color: var(--accent);
+      font-weight: bold;
+      white-space: nowrap;
+      min-width: 64px;
+      text-align: right;
+    }
+
+    .btn-skip {
+      background: transparent;
+      border: 1.5px solid var(--land-stroke);
+      color: var(--text-sub);
+      font-family: var(--font-body);
+      font-size: 0.72rem;
+      padding: 7px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-skip:hover {
       border-color: var(--accent);
       color: var(--accent);
     }
@@ -150,6 +251,22 @@
     }
 
     .country.active {
+      fill: var(--active);
+      stroke: #a08830;
+    }
+
+    /* quiz feedback states on the map */
+    .country.quiz-correct {
+      fill: var(--visited);
+      stroke: var(--visited-dk);
+    }
+
+    .country.quiz-wrong {
+      fill: var(--wrong);
+      stroke: var(--wrong-dk);
+    }
+
+    .country.quiz-reveal {
       fill: var(--active);
       stroke: #a08830;
     }
@@ -230,6 +347,40 @@
       letter-spacing: 0.04em;
     }
 
+    /* ── Quiz feedback toast ──────────────────── */
+    #quiz-feedback {
+      position: fixed;
+      top: 78px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-8px);
+      opacity: 0;
+      transition: opacity 0.15s, transform 0.15s;
+      pointer-events: none;
+      z-index: 95;
+    }
+
+    #quiz-feedback.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    #quiz-feedback .fb-inner {
+      padding: 9px 22px;
+      border-radius: 20px;
+      font-size: 0.84rem;
+      font-weight: bold;
+      color: #fff;
+      box-shadow: 0 4px 14px var(--panel-shadow);
+    }
+
+    #quiz-feedback.correct .fb-inner {
+      background: var(--visited-dk);
+    }
+
+    #quiz-feedback.wrong .fb-inner {
+      background: var(--wrong-dk);
+    }
+
     /* ── Progress bar ─────────────────────────── */
     #progress-bar-wrap {
       position: fixed;
@@ -248,8 +399,10 @@
       width: 0%;
     }
 
-    /* ── Completion overlay ───────────────────── */
-    #complete-overlay {
+    /* ── Completion / setup / result overlays ─── */
+    #complete-overlay,
+    #quiz-setup-overlay,
+    #quiz-result-overlay {
       display: none;
       position: fixed;
       inset: 0;
@@ -259,16 +412,21 @@
       justify-content: center;
     }
 
-    #complete-overlay.show {
+    #complete-overlay.show,
+    #quiz-setup-overlay.show,
+    #quiz-result-overlay.show {
       display: flex;
     }
 
-    .complete-card {
+    .complete-card,
+    .setup-card,
+    .result-card {
       background: var(--panel-bg);
       border-radius: 16px;
-      padding: 52px 60px;
+      padding: 48px 56px;
       text-align: center;
       box-shadow: 0 8px 40px var(--panel-shadow);
+      max-width: 360px;
     }
 
     .complete-card .trophy {
@@ -276,17 +434,22 @@
       margin-bottom: 16px;
     }
 
-    .complete-card h2 {
+    .complete-card h2,
+    .setup-card h2,
+    .result-card h2 {
       font-family: var(--font-display);
-      font-size: 2rem;
+      font-size: 1.8rem;
       font-weight: normal;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
-    .complete-card p {
+    .complete-card p,
+    .setup-card p,
+    .result-card p {
       color: var(--text-sub);
-      font-size: 0.9rem;
-      margin-bottom: 28px;
+      font-size: 0.88rem;
+      margin-bottom: 26px;
+      line-height: 1.6;
     }
 
     .btn-restart {
@@ -304,6 +467,61 @@
 
     .btn-restart:hover {
       background: #a8451f;
+    }
+
+    .quiz-length-options {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .quiz-length-options button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      padding: 11px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .quiz-length-options button:hover {
+      background: #a8451f;
+    }
+
+    .result-score {
+      font-family: var(--font-display);
+      font-size: 2.4rem;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    .result-actions .btn-secondary {
+      background: transparent;
+      color: var(--text-sub);
+      border: 1.5px solid var(--land-stroke);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      transition: all 0.15s;
+    }
+
+    .result-actions .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
     }
 
     /* ── Zoom controls ───────────────────────── */
@@ -367,6 +585,12 @@
       .header-left h1 { font-size: 1rem; }
       .counter .num { font-size: 1.2rem; }
       #name-banner .banner-ja { font-size: 1.1rem; }
+      #quiz-bar {
+        padding: 8px 14px;
+        flex-wrap: wrap;
+      }
+      .quiz-prompt .q-ja { font-size: 1.05rem; }
+      .quiz-progress, .quiz-score { min-width: auto; }
     }
   </style>
 </head>
@@ -377,10 +601,14 @@
   <header>
     <div class="header-left">
       <h1>世界地図 — 国名暗記</h1>
-      <p>国をクリックして名前を確認。訪れた国は緑に染まる。</p>
+      <p id="header-subtitle">国をクリックして名前を確認。訪れた国は緑に染まる。</p>
     </div>
     <div class="header-right">
-      <div class="counter">
+      <div class="mode-toggle" id="mode-toggle">
+        <button class="mode-btn active" id="mode-learn" type="button">暗記</button>
+        <button class="mode-btn" id="mode-quiz" type="button">クイズ</button>
+      </div>
+      <div class="counter" id="counter-panel">
         <div class="num" id="visited-count">0</div>
         <div class="label">/ <span id="total-count">0</span> カ国 クリック済み</div>
       </div>
@@ -388,11 +616,21 @@
     </div>
   </header>
 
+  <div id="quiz-bar">
+    <div class="quiz-progress"><span id="quiz-index">1</span> / <span id="quiz-total">10</span> 問</div>
+    <div class="quiz-prompt">
+      <div class="q-ja" id="quiz-ja">—</div>
+      <div class="q-en" id="quiz-en">—</div>
+    </div>
+    <div class="quiz-score">正解 <span id="quiz-score">0</span></div>
+    <button class="btn-skip" id="quiz-skip" type="button">スキップ</button>
+  </div>
+
   <div id="map-container">
     <svg id="map"></svg>
   </div>
 
-  <!-- Floating tooltip (follows cursor) -->
+  <!-- Floating tooltip (follows cursor, 暗記モードのみ) -->
   <div id="tooltip">
     <div class="tooltip-inner">
       <div class="ja" id="tt-ja"></div>
@@ -400,13 +638,16 @@
     </div>
   </div>
 
-  <!-- Pinned banner after click -->
+  <!-- Pinned banner after click (暗記モードのみ) -->
   <div id="name-banner">
     <div class="banner-inner">
       <div class="banner-ja" id="bn-ja"></div>
       <div class="banner-en" id="bn-en"></div>
     </div>
   </div>
+
+  <!-- Quiz correct/incorrect toast -->
+  <div id="quiz-feedback"><div class="fb-inner" id="quiz-feedback-text"></div></div>
 
   <!-- Zoom controls -->
   <div id="zoom-controls">
@@ -415,13 +656,39 @@
     <button class="zoom-btn" id="zoom-reset" title="全体表示" style="font-size:0.8rem;">⌂</button>
   </div>
 
-  <!-- Completion overlay -->
+  <!-- Completion overlay (暗記モード全カ国制覇) -->
   <div id="complete-overlay">
     <div class="complete-card">
       <div class="trophy">🌍</div>
       <h2>全カ国制覇！</h2>
       <p id="complete-msg"></p>
       <button class="btn-restart" id="btn-restart">もう一度チャレンジ</button>
+    </div>
+  </div>
+
+  <!-- Quiz setup overlay -->
+  <div id="quiz-setup-overlay">
+    <div class="setup-card">
+      <h2>クイズモード</h2>
+      <p>表示された国名を見て、地図上でその国をクリックしてください。何問挑戦しますか？</p>
+      <div class="quiz-length-options">
+        <button data-count="10" type="button">10問</button>
+        <button data-count="30" type="button">30問</button>
+        <button data-count="all" type="button">全カ国</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz result overlay -->
+  <div id="quiz-result-overlay">
+    <div class="result-card">
+      <h2>結果発表</h2>
+      <div class="result-score" id="result-score">0 / 0</div>
+      <p id="result-message"></p>
+      <div class="result-actions">
+        <button class="btn-restart" id="quiz-retry" type="button">もう一度</button>
+        <button class="btn-secondary" id="quiz-back-to-learn" type="button">暗記モードに戻る</button>
+      </div>
     </div>
   </div>
 
@@ -438,6 +705,19 @@ const STORAGE_KEY = 'worldmap_visited_v1';
 let visited = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
 let totalCountries = 0;
 let bannerTimer = null;
+let allFeatures = [];
+
+// mode: 'learn' | 'quiz'
+let mode = 'learn';
+
+// quiz state
+let quizQueue = [];
+let quizIndex = 0;
+let quizScore = 0;
+let quizTotal = 0;
+let quizTarget = null;
+let quizLocked = false;
+let quizAdvanceTimer = null;
 
 // ─────────────────────────────────────────────
 // D3 Setup
@@ -473,6 +753,7 @@ svg.insert('rect', ':first-child')
 async function initMap() {
   const world = await d3.json('world.geojson');
   const features = world.features.filter(d => d.properties.name !== 'Antarctica');
+  allFeatures = features;
   totalCountries = features.length;
 
   document.getElementById('total-count').textContent = totalCountries;
@@ -490,7 +771,7 @@ async function initMap() {
       .on('mouseenter', onMouseEnter)
       .on('mousemove', onMouseMove)
       .on('mouseleave', onMouseLeave)
-      .on('click', onClick);
+      .on('click', onCountryClick);
 
   fitMap();
 }
@@ -546,6 +827,8 @@ function positionTooltip(event) {
 }
 
 function onMouseEnter(event, d) {
+  if (mode === 'quiz') return; // クイズ中はヒントを出さない
+
   const en = d.properties.name;
 
   // クリック済みの国なら国名を表示、未クリックなら「？？？」を表示
@@ -565,6 +848,7 @@ function onMouseEnter(event, d) {
 }
 
 function onMouseMove(event) {
+  if (mode === 'quiz') return;
   positionTooltip(event);
 }
 
@@ -572,7 +856,15 @@ function onMouseLeave() {
   tooltip.classList.remove('show');
 }
 
-function onClick(event, d) {
+function onCountryClick(event, d) {
+  if (mode === 'quiz') {
+    quizHandleClick.call(this, d);
+  } else {
+    onLearnClick.call(this, event, d);
+  }
+}
+
+function onLearnClick(event, d) {
   const en = d.properties.name;
   const ja = nameJa(en);
 
@@ -622,7 +914,7 @@ function onClick(event, d) {
   updateProgressBar();
 }
 // ─────────────────────────────────────────────
-// Counter & Progress
+// Counter & Progress (暗記モード)
 // ─────────────────────────────────────────────
 function updateCounter() {
   document.getElementById('visited-count').textContent = visited.size;
@@ -644,7 +936,168 @@ function checkComplete(lastCountry) {
 }
 
 // ─────────────────────────────────────────────
-// Controls
+// Mode switching
+// ─────────────────────────────────────────────
+const modeLearnBtn   = document.getElementById('mode-learn');
+const modeQuizBtn    = document.getElementById('mode-quiz');
+const counterPanel   = document.getElementById('counter-panel');
+const btnResetEl     = document.getElementById('btn-reset');
+const quizBar        = document.getElementById('quiz-bar');
+const headerSubtitle = document.getElementById('header-subtitle');
+const quizFeedback     = document.getElementById('quiz-feedback');
+const quizFeedbackText = document.getElementById('quiz-feedback-text');
+const quizSetupOverlay = document.getElementById('quiz-setup-overlay');
+const quizResultOverlay = document.getElementById('quiz-result-overlay');
+
+function setMode(next) {
+  mode = next;
+  const isQuiz = mode === 'quiz';
+
+  modeLearnBtn.classList.toggle('active', !isQuiz);
+  modeQuizBtn.classList.toggle('active', isQuiz);
+  counterPanel.style.display = isQuiz ? 'none' : '';
+  btnResetEl.style.display = isQuiz ? 'none' : '';
+  quizBar.classList.toggle('show', isQuiz);
+
+  headerSubtitle.textContent = isQuiz
+    ? '表示された国名を地図上でクリックしよう。'
+    : '国をクリックして名前を確認。訪れた国は緑に染まる。';
+
+  tooltip.classList.remove('show');
+  banner.classList.remove('show');
+  clearTimeout(bannerTimer);
+  g.selectAll('.country').classed('quiz-correct', false).classed('quiz-wrong', false).classed('quiz-reveal', false);
+}
+
+modeLearnBtn.addEventListener('click', () => {
+  clearTimeout(quizAdvanceTimer);
+  setMode('learn');
+});
+
+modeQuizBtn.addEventListener('click', () => {
+  quizSetupOverlay.classList.add('show');
+});
+
+// ─────────────────────────────────────────────
+// Quiz mode
+// ─────────────────────────────────────────────
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+document.querySelectorAll('.quiz-length-options button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    quizSetupOverlay.classList.remove('show');
+    startQuiz(btn.dataset.count);
+  });
+});
+
+function startQuiz(count) {
+  setMode('quiz');
+
+  const pool = shuffle(allFeatures.map(f => f.properties.name));
+  quizQueue = count === 'all' ? pool : pool.slice(0, Math.min(Number(count), pool.length));
+  quizTotal = quizQueue.length;
+  quizIndex = 0;
+  quizScore = 0;
+  quizLocked = false;
+
+  document.getElementById('quiz-total').textContent = quizTotal;
+  document.getElementById('quiz-score').textContent = '0';
+
+  showQuizQuestion();
+}
+
+function showQuizQuestion() {
+  g.selectAll('.country').classed('quiz-correct', false).classed('quiz-wrong', false).classed('quiz-reveal', false);
+
+  quizTarget = quizQueue[quizIndex];
+  quizLocked = false;
+
+  document.getElementById('quiz-index').textContent = quizIndex + 1;
+  document.getElementById('quiz-ja').textContent = nameJa(quizTarget);
+  document.getElementById('quiz-en').textContent = quizTarget;
+}
+
+function quizHandleClick(d) {
+  if (mode !== 'quiz' || quizLocked) return;
+
+  const en = d.properties.name;
+
+  if (en === quizTarget) {
+    quizLocked = true;
+    quizScore++;
+    document.getElementById('quiz-score').textContent = quizScore;
+    d3.select(this).classed('quiz-correct', true);
+    showQuizFeedback(true, '正解！');
+
+    clearTimeout(quizAdvanceTimer);
+    quizAdvanceTimer = setTimeout(advanceQuiz, 850);
+  } else {
+    d3.select(this).classed('quiz-wrong', true);
+    showQuizFeedback(false, `違います（${nameJa(en)}）`);
+    setTimeout(() => d3.select(this).classed('quiz-wrong', false), 400);
+  }
+}
+
+function showQuizFeedback(correct, message) {
+  quizFeedback.classList.remove('correct', 'wrong');
+  quizFeedback.classList.add(correct ? 'correct' : 'wrong');
+  quizFeedbackText.textContent = message;
+  quizFeedback.classList.add('show');
+  clearTimeout(quizFeedback._hideTimer);
+  quizFeedback._hideTimer = setTimeout(() => quizFeedback.classList.remove('show'), correct ? 800 : 650);
+}
+
+document.getElementById('quiz-skip').addEventListener('click', () => {
+  if (mode !== 'quiz' || quizLocked) return;
+  quizLocked = true;
+
+  g.selectAll('.country')
+    .filter(d => d.properties.name === quizTarget)
+    .classed('quiz-reveal', true);
+
+  showQuizFeedback(false, `正解は「${nameJa(quizTarget)}」でした`);
+
+  clearTimeout(quizAdvanceTimer);
+  quizAdvanceTimer = setTimeout(advanceQuiz, 1100);
+});
+
+function advanceQuiz() {
+  quizIndex++;
+  if (quizIndex >= quizTotal) {
+    showQuizResult();
+    return;
+  }
+  showQuizQuestion();
+}
+
+function showQuizResult() {
+  quizBar.classList.remove('show');
+  const pct = quizTotal > 0 ? Math.round((quizScore / quizTotal) * 100) : 0;
+  document.getElementById('result-score').textContent = `${quizScore} / ${quizTotal}`;
+  document.getElementById('result-message').textContent = `正答率 ${pct}%`;
+  quizResultOverlay.classList.add('show');
+}
+
+document.getElementById('quiz-retry').addEventListener('click', () => {
+  quizResultOverlay.classList.remove('show');
+  const count = quizTotal === allFeatures.length ? 'all' : quizTotal;
+  startQuiz(count);
+});
+
+document.getElementById('quiz-back-to-learn').addEventListener('click', () => {
+  quizResultOverlay.classList.remove('show');
+  setMode('learn');
+});
+
+// ─────────────────────────────────────────────
+// Controls (暗記モード)
 // ─────────────────────────────────────────────
 document.getElementById('btn-reset').addEventListener('click', () => {
   if (!confirm('クリック履歴をリセットしますか？')) return;
