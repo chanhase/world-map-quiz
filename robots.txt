@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://chanhase.github.io/world-map-quiz/sitemap.xml
