@@ -88,3 +88,31 @@ a {
   color: var(--text-sub);
   font-size: 0.8rem;
 }
+
+ol, ul {
+  margin: 0 0 16px 1.3em;
+}
+
+li {
+  font-size: 0.92rem;
+  margin-bottom: 8px;
+}
+
+.page-footer-nav {
+  margin-top: 48px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0,0,0,0.08);
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-footer-nav a {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  text-decoration: none;
+}
+
+.page-footer-nav a:hover {
+  color: var(--accent);
+}
