@@ -3,6 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!--
+    TODO(運営者向け): Google アナリティクスの計測IDに差し替えてください。
+    取得方法: https://analytics.google.com → 管理 → プロパティ作成 →
+    「ウェブ」のデータストリームを追加 → 発行される G-XXXXXXXXXX を
+    下の2箇所の "G-XXXXXXXXXX" と置き換える（この <script> タグ全体は
+    index.html / privacy-policy.html / contact.html の3ファイルにあります）
+  -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+
   <title>世界地図 — 国名暗記ツール</title>
   <meta name="description" content="白地図をクリックして国名を覚える無料の暗記ツール。クイズモードで実力チェックも。訪れた国は緑色にマークされ、進捗バーで達成率がひと目でわかります。登録不要・ブラウザだけですぐ遊べます。" />
   <meta property="og:title" content="世界地図 — 国名暗記ツール" />
