@@ -14,13 +14,15 @@
     gtag('config', 'G-9V3PMEN30B');
   </script>
 
-  <title>世界地図 — 国名暗記ツール</title>
-  <meta name="description" content="白地図をクリックして国名を覚える無料の暗記ツール。クイズモードで実力チェックも。訪れた国は緑色にマークされ、進捗バーで達成率がひと目でわかります。登録不要・ブラウザだけですぐ遊べます。" />
-  <meta property="og:title" content="世界地図 — 国名暗記ツール" />
-  <meta property="og:description" content="白地図をクリックして国名を覚える無料の暗記ツール。クイズモードで実力チェックも。登録不要・ブラウザだけですぐ遊べます。" />
+  <title>ヨーロッパ地図で国名暗記 — 39カ国クイズ | 世界地図 国名暗記ツール</title>
+  <meta name="description" content="ヨーロッパの白地図をクリックして国名を覚える無料ツール。暗記モードとクイズモードでヨーロッパ39カ国の国名を効率よく学習できます。登録不要・ブラウザだけですぐ遊べます。" />
+  <meta property="og:title" content="ヨーロッパ地図で国名暗記 — 39カ国クイズ | 世界地図 国名暗記ツール" />
+  <meta property="og:description" content="ヨーロッパの白地図をクリックして国名を覚える無料ツール。暗記モードとクイズモードでヨーロッパ39カ国の国名を学習できます。" />
   <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://chanhase.github.io/world-map-quiz/europe.html" />
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="translations.js"></script>
+  <script src="continents.js"></script>
   <style>
     /* ── Design tokens ───────────────────────── */
     :root {
@@ -228,6 +230,7 @@
     /* ── Map area ─────────────────────────────── */
     #map-container {
       flex: 1;
+      min-height: 420px;
       position: relative;
       overflow: hidden;
       background: var(--ocean);
@@ -605,6 +608,78 @@
       color: var(--accent);
     }
 
+    /* ── Continent nav (in-header) ─────────────── */
+    .continent-nav {
+      padding: 6px 28px;
+      background: var(--bg);
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+      font-size: 0.72rem;
+    }
+
+    .continent-nav a {
+      color: var(--text-sub);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+
+    .continent-nav a.current {
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .continent-nav a:hover {
+      color: var(--accent);
+    }
+
+    /* ── Below-the-fold SEO content ────────────── */
+    .continent-info {
+      flex-shrink: 0;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 24px 56px;
+    }
+
+    .continent-info h2 {
+      font-family: var(--font-display);
+      font-weight: normal;
+      font-size: 1.3rem;
+      margin-bottom: 12px;
+    }
+
+    .continent-info p {
+      font-size: 0.88rem;
+      color: var(--text-main);
+      line-height: 1.8;
+      margin-bottom: 14px;
+    }
+
+    .continent-info .other-continents {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .continent-info .other-continents a {
+      display: inline-block;
+      background: var(--panel-bg);
+      border: 1.5px solid var(--land-stroke);
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 0.84rem;
+      padding: 9px 18px;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+
+    .continent-info .other-continents a:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
     /* ── Responsive ───────────────────────────── */
     @media (max-width: 600px) {
       header {
@@ -620,6 +695,8 @@
       }
       .quiz-prompt .q-ja { font-size: 1.05rem; }
       .quiz-progress, .quiz-score { min-width: auto; }
+      .continent-nav { padding: 6px 14px; }
+      .continent-info { padding: 32px 16px 48px; }
     }
   </style>
 </head>
@@ -629,8 +706,8 @@
 
   <header>
     <div class="header-left">
-      <h1>世界地図 — 国名暗記</h1>
-      <p id="header-subtitle">国をクリックして名前を確認。訪れた国は緑に染まる。</p>
+      <h1>ヨーロッパ地図 — 国名暗記</h1>
+      <p id="header-subtitle">ヨーロッパの国だけを表示。国をクリックして名前を確認。</p>
     </div>
     <div class="header-right">
       <div class="mode-toggle" id="mode-toggle">
@@ -644,6 +721,13 @@
       <button class="btn-reset" id="btn-reset">リセット</button>
     </div>
   </header>
+
+  <nav class="continent-nav">
+    <a href="index.html">🌍 世界全体</a>
+    <a href="asia.html">アジア</a>
+    <a href="europe.html" class="current">ヨーロッパ</a>
+    <a href="africa.html">アフリカ</a>
+  </nav>
 
   <div id="quiz-bar">
     <div class="quiz-progress"><span id="quiz-index">1</span> / <span id="quiz-total">10</span> 問</div>
@@ -688,8 +772,8 @@
   <!-- Completion overlay (暗記モード全カ国制覇) -->
   <div id="complete-overlay">
     <div class="complete-card">
-      <div class="trophy">🌍</div>
-      <h2>全カ国制覇！</h2>
+      <div class="trophy">🏰</div>
+      <h2>ヨーロッパ制覇！</h2>
       <p id="complete-msg"></p>
       <button class="btn-restart" id="btn-restart">もう一度チャレンジ</button>
     </div>
@@ -723,19 +807,30 @@
   </div>
 
   <footer>
-    <a href="asia.html">アジア地図</a>
-    <a href="europe.html">ヨーロッパ地図</a>
-    <a href="africa.html">アフリカ地図</a>
+    <a href="index.html">世界地図（全カ国）に戻る</a>
     <a href="guide.html">使い方・国名の覚え方のコツ</a>
     <a href="privacy-policy.html">プライバシーポリシー</a>
     <a href="contact.html">お問い合わせ</a>
   </footer>
 
+  <section class="continent-info">
+    <h2>ヨーロッパの国名を地図で覚える</h2>
+    <p>このページはヨーロッパ39カ国だけに絞った白地図で、国名の暗記とクイズに集中して取り組めるツールです。西ヨーロッパ・北欧・東欧・バルカン半島の国々を、地図上の位置と名前をセットにして効率よく学習できます。</p>
+    <p>まずは暗記モードで気になる国から順にクリックして国名を確認し、ひと通り覚えたらクイズモードで実力チェックをしてみましょう。進捗はブラウザに保存されるので、途中で中断しても続きから再開できます。</p>
+    <p>他の大陸や世界全体の地図に切り替えたい場合は、以下から移動できます。</p>
+    <div class="other-continents">
+      <a href="index.html">🌍 世界全体（全カ国）</a>
+      <a href="asia.html">アジアの地図</a>
+      <a href="africa.html">アフリカの地図</a>
+    </div>
+  </section>
+
 <script>
 // ─────────────────────────────────────────────
 // State
 // ─────────────────────────────────────────────
-const STORAGE_KEY = 'worldmap_visited_v1';
+const CONTINENT = 'Europe';
+const STORAGE_KEY = 'worldmap_visited_europe_v1';
 let visited = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
 let totalCountries = 0;
 let bannerTimer = null;
@@ -759,10 +854,7 @@ let quizAdvanceTimer = null;
 const svg = d3.select('#map');
 const container = document.getElementById('map-container');
 
-const projection = d3.geoNaturalEarth1()
-  .scale(160)
-  .translate([0, 0]);   // will be recalculated on resize
-
+const projection = d3.geoMercator();
 const path = d3.geoPath().projection(projection);
 
 // zoom
@@ -786,7 +878,7 @@ svg.insert('rect', ':first-child')
 // ─────────────────────────────────────────────
 async function initMap() {
   const world = await d3.json('world.geojson');
-  const features = world.features.filter(d => d.properties.name !== 'Antarctica');
+  const features = world.features.filter(d => COUNTRY_CONTINENTS[d.properties.name] === CONTINENT);
   allFeatures = features;
   totalCountries = features.length;
 
@@ -814,9 +906,10 @@ function fitMap() {
   const W = container.clientWidth;
   const H = container.clientHeight;
 
-  projection
-    .scale(Math.min(W / 6.3, H / 3.4))
-    .translate([W / 2, H / 2]);
+  const fc = { type: 'FeatureCollection', features: allFeatures };
+  if (allFeatures.length) {
+    projection.fitExtent([[24, 24], [Math.max(W - 24, 48), Math.max(H - 24, 48)]], fc);
+  }
 
   svg
     .attr('width', W)
@@ -865,7 +958,6 @@ function onMouseEnter(event, d) {
 
   const en = d.properties.name;
 
-  // クリック済みの国なら国名を表示、未クリックなら「？？？」を表示
   if (visited.has(en)) {
     ttJa.textContent = nameJa(en);
     ttEn.textContent = en;
@@ -903,26 +995,21 @@ function onLearnClick(event, d) {
   const ja = nameJa(en);
 
   if (visited.has(en)) {
-    // ── すでに回答済みの場合：未回答に戻す ──
     visited.delete(en);
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...visited]));
     d3.select(this).classed('visited', false).classed('active', false);
 
-    // ツールチップを未回答表示に戻す
     ttJa.textContent = '？？？';
     ttEn.textContent = 'クリックで答えを表示';
 
-    // 下部バナーを非表示にする
     banner.classList.remove('show');
     clearTimeout(bannerTimer);
 
   } else {
-    // ── 未回答の場合：回答済みにする ──
     visited.add(en);
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...visited]));
     d3.select(this).classed('visited', true);
 
-    // ツールチップと下部バナーに正解を表示
     ttJa.textContent = ja;
     ttEn.textContent = en;
 
@@ -930,7 +1017,6 @@ function onLearnClick(event, d) {
     bnEn.textContent = en;
     banner.classList.add('show');
 
-    // ハイライト表示
     d3.selectAll('.country').classed('active', false);
     d3.select(this).classed('active', true);
 
@@ -940,10 +1026,9 @@ function onLearnClick(event, d) {
       d3.select(this).classed('active', false);
     }, 2600);
 
-    checkComplete(ja);
+    checkComplete();
   }
 
-  // カウントとプログレスバーを更新
   updateCounter();
   updateProgressBar();
 }
@@ -959,11 +1044,11 @@ function updateProgressBar() {
   document.getElementById('progress-bar').style.width = pct + '%';
 }
 
-function checkComplete(lastCountry) {
+function checkComplete() {
   if (visited.size >= totalCountries) {
     setTimeout(() => {
       document.getElementById('complete-msg').textContent =
-        `${totalCountries} カ国すべてを制覇しました！`;
+        `ヨーロッパ${totalCountries} カ国すべてを制覇しました！`;
       document.getElementById('complete-overlay').classList.add('show');
     }, 600);
   }
@@ -995,7 +1080,7 @@ function setMode(next) {
 
   headerSubtitle.textContent = isQuiz
     ? '表示された国名を地図上でクリックしよう。'
-    : '国をクリックして名前を確認。訪れた国は緑に染まる。';
+    : 'ヨーロッパの国だけを表示。国をクリックして名前を確認。';
 
   tooltip.classList.remove('show');
   banner.classList.remove('show');
@@ -1132,8 +1217,8 @@ document.getElementById('quiz-back-to-learn').addEventListener('click', () => {
 
 document.getElementById('quiz-share').addEventListener('click', async () => {
   const pct = quizTotal > 0 ? Math.round((quizScore / quizTotal) * 100) : 0;
-  const text = `世界地図クイズで ${quizScore}/${quizTotal} 問正解（正答率${pct}%）でした！ #世界地図国名暗記ツール`;
-  const url = 'https://chanhase.github.io/world-map-quiz/';
+  const text = `ヨーロッパ地図クイズで ${quizScore}/${quizTotal} 問正解（正答率${pct}%）でした！ #世界地図国名暗記ツール`;
+  const url = 'https://chanhase.github.io/world-map-quiz/europe.html';
 
   if (navigator.share) {
     try {
