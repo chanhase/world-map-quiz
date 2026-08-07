@@ -1,0 +1,82 @@
+name: 日本株 財務比較データ更新
+
+# 決算データの更新に合わせてEDINETから財務データを取得し、指標を再計算する。
+# AI(Claude)によるコメント生成は、実際に指標データへの変更を検知したときのみ実行する
+# (訪問者アクセス時にAIを呼び出すことはない)。
+on:
+  schedule:
+    # 毎月1日 09:00 JST (00:00 UTC) に実行。有価証券報告書の提出は通年で発生するため、
+    # 「四半期ごとの更新」を取りこぼさないよう月次でチェックし、実際に数値が変化した
+    # ときだけAIコメントを再生成する。
+    - cron: "0 0 1 * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stocks-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: stocks
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: stocks/package-lock.json
+
+      - name: 依存関係のインストール
+        run: npm ci
+
+      - name: 企業リストの検証(証券コード・企業名の突き合わせ)
+        env:
+          EDINET_SUBSCRIPTION_KEY: ${{ secrets.EDINET_SUBSCRIPTION_KEY }}
+        run: npm run verify-companies
+
+      - name: EDINETからデータ取得・指標算出
+        env:
+          EDINET_SUBSCRIPTION_KEY: ${{ secrets.EDINET_SUBSCRIPTION_KEY }}
+        run: npm run fetch-and-compute
+
+      - name: 算出ロジックの整合性テスト
+        run: npm test
+
+      - name: 指標データの変更を検知
+        id: diff
+        run: |
+          if git diff --quiet -- data/telecom/metrics.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 業界内比較コメントの生成(AI呼び出しは指標変更時のみ)
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: npm run generate-comments
+
+      - name: 静的HTMLの生成
+        run: npm run render-site
+
+      - name: 変更をコミット
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/telecom/metrics.json data/telecom/comments.json data/telecom/.filing-index-cache.json telecom.html
+          if git diff --cached --quiet; then
+            echo "変更なし。コミットをスキップします。"
+          else
+            git commit -m "chore(stocks): update telecom industry financial data"
+            git push
+          fi

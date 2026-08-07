@@ -1,0 +1,53 @@
+{
+  "industry": {
+    "id": "telecom",
+    "name": "通信業",
+    "description": "通信サービス・回線(MVNO含む)・通信インフラ関連の事業を営む企業を対象とした初期選定リストです。東証33業種の「情報・通信業」は放送・ソフトウェア・ゲーム等も含む非常に広い区分のため、本サービスではその中から通信サービスに近い企業を絞り込んでいます。",
+    "scopeNote": "対象はスタンダード市場・グロース市場のみ。プライム市場の企業は対象外です。"
+  },
+  "note": "このリストは2026年8月時点の一般公開情報をもとにした初期候補です。開発環境からEDINET/JPX/株式情報サイトへのネットワークアクセスが制限されていたため、この場では最終確認ができていません。scripts/verify-companies.mjs は、実行時(GitHub Actions)にEDINETの提出書類情報と証券コード・企業名を突き合わせ、不一致があればワークフローを失敗させます。市場区分(スタンダード/グロース)についてはEDINETからは取得できないため、運用開始前に日本取引所グループ(JPX)の上場会社一覧で必ず確認してください。",
+  "companies": [
+    {
+      "secCode": "3843",
+      "name": "フリービット株式会社",
+      "market": "Growth",
+      "verified": false
+    },
+    {
+      "secCode": "9422",
+      "name": "株式会社コネクシオ",
+      "market": "Standard",
+      "verified": false
+    },
+    {
+      "secCode": "9419",
+      "name": "株式会社ワイヤレスゲート",
+      "market": "Growth",
+      "verified": false
+    },
+    {
+      "secCode": "3683",
+      "name": "株式会社サイバーリンクス",
+      "market": "Standard",
+      "verified": false
+    },
+    {
+      "secCode": "4441",
+      "name": "トビラシステムズ株式会社",
+      "market": "Growth",
+      "verified": false
+    },
+    {
+      "secCode": "3671",
+      "name": "株式会社ソフトフロントホールディングス",
+      "market": "Growth",
+      "verified": false
+    },
+    {
+      "secCode": "3757",
+      "name": "株式会社日本コンピュータ・ダイナミクス",
+      "market": "Standard",
+      "verified": false
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "jp-stock-compare",
+  "version": "1.0.0",
+  "private": true,
+  "description": "日本株(スタンダード・グロース市場)財務比較サイトのデータ取得・指標算出・AIコメント生成スクリプト",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "verify-companies": "node scripts/verify-companies.mjs",
+    "fetch-and-compute": "node scripts/fetch-and-compute.mjs",
+    "generate-comments": "node scripts/generate-comments.mjs",
+    "render-site": "node scripts/render-site.mjs",
+    "update-all": "npm run verify-companies && npm run fetch-and-compute && npm test && npm run generate-comments && npm run render-site"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "adm-zip": "^0.5.16"
+  }
+}
