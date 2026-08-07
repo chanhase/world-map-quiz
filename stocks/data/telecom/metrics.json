@@ -1,0 +1,18 @@
+{
+  "industry": {
+    "id": "telecom",
+    "name": "通信業",
+    "description": "通信サービス・回線(MVNO含む)・通信インフラ関連の事業を営む企業を対象とした初期選定リストです。東証33業種の「情報・通信業」は放送・ソフトウェア・ゲーム等も含む非常に広い区分のため、本サービスではその中から通信サービスに近い企業を絞り込んでいます。",
+    "scopeNote": "対象はスタンダード市場・グロース市場のみ。プライム市場の企業は対象外です。"
+  },
+  "generatedAt": null,
+  "companies": [
+    { "secCode": "3843", "name": "フリービット株式会社", "market": "Growth", "status": "error", "error": "初回データ取得待ち(GitHub Actions初回実行後に反映されます)" },
+    { "secCode": "9422", "name": "株式会社コネクシオ", "market": "Standard", "status": "error", "error": "初回データ取得待ち(GitHub Actions初回実行後に反映されます)" },
+    { "secCode": "9419", "name": "株式会社ワイヤレスゲート", "market": "Growth", "status": "error", "error": "初回データ取得待ち(GitHub Actions初回実行後に反映されます)" },
+    { "secCode": "3683", "name": "株式会社サイバーリンクス", "market": "Standard", "status": "error", "error": "初回データ取得待ち(GitHub Actions初回実行後に反映されます)" },
+    { "secCode": "4441", "name": "トビラシステムズ株式会社", "market": "Growth", "status": "error", "error": "初回データ取得待ち(GitHub Actions初回実行後に反映されます)" },
+    { "secCode": "3671", "name": "株式会社ソフトフロントホールディングス", "market": "Growth", "status": "error", "error": "初回データ取得待ち(GitHub Actions初回実行後に反映されます)" },
+    { "secCode": "3757", "name": "株式会社日本コンピュータ・ダイナミクス", "market": "Standard", "status": "error", "error": "初回データ取得待ち(GitHub Actions初回実行後に反映されます)" }
+  ]
+}
