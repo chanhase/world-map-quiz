@@ -68,8 +68,8 @@ BPS(1株当たり純資産額)と組み合わせてPBRを算出しています�
 
 | Secret名 | 用途 |
 |---|---|
-| `EDINET_SUBSCRIPTION_KEY` | EDINET API v2 の利用登録で発行されるサブスクリプションキー(無料) |
-| `ANTHROPIC_API_KEY` | Claude API キー(比較コメント生成用) |
+| `EDINET_SUBSCRIPTION_KEY` | EDINET API v2 の利用登録で発行されるサブスクリプションキー(無料。必須) |
+| `ANTHROPIC_API_KEY` | Claude API キー(比較コメント生成用。**任意**。未設定でも財務データの更新自体は動き、比較コメント欄は「次回のデータ更新時に生成されます」というプレースホルダー表示になる) |
 
 ### ローカルでの実行
 

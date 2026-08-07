@@ -67,8 +67,8 @@ async function readJsonIfExists(path) {
 async function main() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    console.error("ANTHROPIC_API_KEY が未設定です。");
-    process.exit(1);
+    console.warn("ANTHROPIC_API_KEY が未設定のため、コメント生成をスキップします。");
+    return;
   }
 
   const metrics = await readJsonIfExists(METRICS_PATH);
